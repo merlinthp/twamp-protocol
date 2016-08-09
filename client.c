@@ -117,7 +117,7 @@ static int send_stop_session(int socket, int accept, int sessions)
     memset(&stop, 0, sizeof(stop));
     stop.Type = kStopSessions;
     stop.Accept = accept;
-    stop.SessionsNo = sessions;
+    stop.SessionsNo = htonl(sessions);
     return send(socket, &stop, sizeof(stop), 0);
 }
 
@@ -204,6 +204,8 @@ int main(int argc, char *argv[])
         perror("Error receiving Server Greeting");
         exit(EXIT_FAILURE);
     }
+    greet.Modes = ntohl(greet.Modes);
+    greet.Count = ntohl(greet.Count);
     if (greet.Modes == 0) {
         close(servfd);
         fprintf(stderr, "The server does not support any usable Mode\n");
@@ -215,7 +217,7 @@ int main(int argc, char *argv[])
     printf("Sending SetUpResponse...\n");
     SetUpResponse resp;
     memset(&resp, 0, sizeof(resp));
-    resp.Mode = greet.Modes & authmode;
+    resp.Mode = htonl(greet.Modes & authmode);
     rv = send(servfd, &resp, sizeof(resp), 0);
     if (rv <= 0) {
         close(servfd);
@@ -287,7 +289,7 @@ int main(int argc, char *argv[])
         req.IPVN = 4;
         req.SenderPort = ntohs(twamp_test[active_sessions].testport);
         req.ReceiverPort = ntohs(port_recv + rand() % 1000);
-        req.PaddingLength = 27;     // As defined in RFC 6038#4.2
+        req.PaddingLength = htonl(27);     // As defined in RFC 6038#4.2
         TWAMPTimestamp timestamp = get_timestamp();
         timestamp.integer = htonl(ntohl(timestamp.integer) + 10);   // 10 seconds for start time
         req.StartTime = timestamp;
@@ -354,7 +356,7 @@ int main(int argc, char *argv[])
             memset(&pack, 0, sizeof(pack));
             pack.seq_number = htonl(i * test_sessions_msg + j);
             pack.time = get_timestamp();
-            pack.error_estimate = 0x100;    // Multiplier = 1.
+            pack.error_estimate = htons(1);    // Multiplier = 1.
 
             printf("Sending TWAMP-Test message %d for port %d...\n", j + 1, ntohs(twamp_test[i].port));
             serv_addr.sin_port = twamp_test[i].port;
