@@ -342,6 +342,26 @@ int main(int argc, char *argv[])
             close(servfd);
             exit(EXIT_FAILURE);
         }
+
+        StartACK ack;
+        memset(&ack, 0, sizeof(ack));
+        rv = recv(servfd, &ack, sizeof(ack), 0);
+        if (rv <= 0) {
+            perror("Error receiving StartSessions ACK");
+            for (i = 0; i < active_sessions; i++)
+                close(twamp_test[i].testfd);
+            free(twamp_test);
+            close(servfd);
+            exit(EXIT_FAILURE);
+        }
+        if (ack.Accept != kOK) {
+            perror("Server rejected start request");
+            for (i = 0; i < active_sessions; i++)
+                close(twamp_test[i].testfd);
+            free(twamp_test);
+            close(servfd);
+            exit(EXIT_FAILURE);
+        }
     }
 
     /* For each accepted TWAMP-Test session send test_sessions_msg
