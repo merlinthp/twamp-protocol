@@ -293,10 +293,7 @@ int main(int argc, char *argv[])
         TWAMPTimestamp timestamp = get_timestamp();
         timestamp.integer = htonl(ntohl(timestamp.integer) + 10);   // 10 seconds for start time
         req.StartTime = timestamp;
-        struct timeval timeout;
-        timeout.tv_sec = TIMEOUT;
-        timeout.tv_usec = 0;
-        timeval_to_timestamp(&timeout, &req.Timeout);
+        req.Timeout.integer = htonl(TIMEOUT);
 
         /* Trying to send the RequestTWSession request for this TWAMP-Test */
         rv = send(servfd, &req, sizeof(req), 0);
