@@ -377,7 +377,7 @@ int main(int argc, char *argv[])
 
             printf("Sending TWAMP-Test message %d for port %d...\n", j + 1, ntohs(twamp_test[i].port));
             serv_addr.sin_port = twamp_test[i].port;
-            rv = sendto(twamp_test[i].testfd, &pack, sizeof(pack), 0,
+            rv = sendto(twamp_test[i].testfd, &pack, TST_PKT_SIZE, 0,
                         (struct sockaddr *)&serv_addr, sizeof(serv_addr));
             if (rv <= 0) {
                 perror("Error sending test packet");
