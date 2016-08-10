@@ -42,6 +42,7 @@ static int port_recv = PORTBASE_RECV;
 static uint16_t test_sessions_no = TEST_SESSIONS;
 static uint32_t test_sessions_msg = TEST_MESSAGES;
 static uint16_t active_sessions = 0;
+static int32_t control_port = SERVER_PORT;
 
 /* The function that prints the help for this program */
 static void usage(char *progname)
@@ -49,12 +50,14 @@ static void usage(char *progname)
     fprintf(stderr, "Usage: %s [options]\n", progname);
     fprintf(stderr, "\n\nWhere \"options\" are:\n");
     fprintf(stderr,
-            "   -s  server      The TWAMP server IP [Mandatory]\n"
-            "   -a  authmode    Default Unauthenticated\n"
-            "   -p  port_sender The miminum Test port sender\n"
-            "   -P  port_recv   The minimum Test port receiver\n"
-            "   -n  test_sess   The number of Test sessions\n"
-            "   -m  no_test_msg The number of Test packets per Test session\n"
+            "   -s  server       The TWAMP server IP [Mandatory]\n"
+            "   -c  control_port Control port (default %d)\n"
+            "   -a  authmode     Default Unauthenticated\n"
+            "   -p  port_sender  The miminum Test port sender\n"
+            "   -P  port_recv    The minimum Test port receiver\n"
+            "   -n  test_sess    The number of Test sessions\n"
+            "   -m  no_test_msg  The number of Test packets per Test session\n",
+            SERVER_PORT
            );
     return;
 }
@@ -67,11 +70,16 @@ static int parse_options(struct hostent **server, char *progname, int argc, char
     }
     int opt;
 
-    while ((opt = getopt(argc, argv, "s:a:p:P:n:m:h")) != -1) {
+    while ((opt = getopt(argc, argv, "s:c:a:p:P:n:m:h")) != -1) {
         switch (opt) {
         case 's':
             /* Get the Server's IP */
             *server = gethostbyname(optarg);
+            break;
+        case 'c':
+            control_port = atoi(optarg);
+            if (control_port < 1 || control_port > 65534)
+                return 1;
             break;
         case 'a':
             /* For now it only supports unauthenticated mode */
@@ -185,7 +193,7 @@ int main(int argc, char *argv[])
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    serv_addr.sin_port = htons(SERVER_PORT);
+    serv_addr.sin_port = htons(control_port);
 
     printf("Connecting to server %s...\n", inet_ntoa(serv_addr.sin_addr));
     if (connect(servfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {

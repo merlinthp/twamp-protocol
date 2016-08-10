@@ -51,6 +51,7 @@ static int port_max = PORTBASE + 1000;
 static enum Mode authmode = kModeUnauthenticated;
 static int used_sockets = 0;
 static fd_set read_fds;
+static int control_port = SERVER_PORT;
 
 /* Prints the help of the TWAMP server */
 static void usage(char *progname)
@@ -60,8 +61,10 @@ static void usage(char *progname)
 
     fprintf(stderr,
             "	-a authmode		Default is Unauthenticated\n"
+            "	-c control_port		Control port (default %d)\n"
             "	-p port_min		Port range for Test receivers based on port_min\n"
-            "	-h         		Print this help message and exits\n");
+            "	-h         		Print this help message and exits\n",
+            SERVER_PORT);
     return;
 }
 
@@ -74,12 +77,17 @@ static int parse_options(char *progname, int argc, char *argv[])
         return 1;
     }
 
-    while ((opt = getopt(argc, argv, "a:p:h")) != -1) {
+    while ((opt = getopt(argc, argv, "a:c:p:h")) != -1) {
         switch (opt) {
         case 'a':
             /* For now only unauthenticated mode is supported */
             /* TODO: set authentication mode to the one from cmd line */
             authmode = kModeUnauthenticated;
+            break;
+        case 'c':
+            control_port = atoi(optarg);
+            if (control_port < 1 || control_port > 65534)
+                return 1;
             break;
         case 'p':
             /* Set port min */
@@ -410,7 +418,7 @@ int main(int argc, char *argv[])
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(SERVER_PORT);
+    serv_addr.sin_port = htons(control_port);
 
     used_sockets++;
     if (bind(listenfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) < 0) {
